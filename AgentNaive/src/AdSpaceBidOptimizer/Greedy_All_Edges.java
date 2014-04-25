@@ -19,7 +19,7 @@ public class Greedy_All_Edges extends Linear_Quadratic_Optimizer {
 		// constants
 		int num_user_types = cost_models.length;		
 		RevenueModel rev_model = new RevenueModel();
-		int increment = 5;
+		int increment = 50;
 		
 		// to update
 		double total_revenue = 0;
@@ -66,7 +66,8 @@ public class Greedy_All_Edges extends Linear_Quadratic_Optimizer {
 							double new_rev = 
 									rev_model.get_incremental_revenue((int)(campaignReaches.get(campaignId)-impsToGo.get(campaignId))+phantomImps.get(campaignId)+campaigns_imp_count.get(campaignId), 
 											campaignReaches.get(campaignId), increment,campaignBudgets.get(campaignId));
-							double new_cost = cost_models[ut].get_incremental_cost(user_types_imp_count[ut], increment);
+							double new_cost = cost_models[ut].get_incremental_cost_twoPts(user_types_imp_count[ut], increment);
+							//System.out.println("cost: "+new_cost);
 							double new_profit = new_rev - new_cost;
 							
 							if (new_profit > best_profit) {	

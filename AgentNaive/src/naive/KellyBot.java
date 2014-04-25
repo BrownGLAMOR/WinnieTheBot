@@ -295,12 +295,12 @@ public class KellyBot extends Agent {
 			double oldBudget = pendingCampaign.getBudget();
 			System.out.println("Old budget: "+oldBudget);
 			//set high so will win all impressions, this should be tuned and maybe thought out
-			pendingCampaign.setBudget(20000);
+			pendingCampaign.setBudget(10000);
 			ProblemSetup setupWithCampaign = createProblemSetup(pendingCampaign);
 			cmpBid = campaignBidComputer.solve(day, costModels, setupNoCampaign, setupWithCampaign);
 			pendingCampaign.setBudget(oldBudget);
 		}
-		if(cmpBid <=50){
+		if(cmpBid <=40){
 			cmpBid = (long) (persistantCampaignBid * pendingCampaign.reachImps);
 		}
 		
@@ -500,7 +500,7 @@ public class KellyBot extends Agent {
 		// boolean matrix for matches between campaigns and user types
 
 
-		System.out.println("1");
+		//System.out.println("1");
 
 		/////////
 		// TWO //
@@ -532,7 +532,7 @@ public class KellyBot extends Agent {
 
 		OptimizationResults optimizationResults = allEdgesOpt.solve(day,costModels, 
 				matches, campaignReaches,startsAndEnds,impsToGo, campaignBudgets);
-		System.out.println("2");
+		//System.out.println("2");
 
 		/*
 		for (int key : optimizationResults.getImpressionAssignments().keySet())
@@ -620,7 +620,7 @@ public class KellyBot extends Agent {
 			}
 		}
 
-		System.out.println("3");
+		//System.out.println("3");
 
 		if (bidBundle != null)
 		{

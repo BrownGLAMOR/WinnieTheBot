@@ -21,19 +21,24 @@ public class ComputeCampaignBid {
 				setupWithCampaign.getStartsAndEnds(),setupWithCampaign.getImpsToGo(),
 				setupWithCampaign.getCampaignBudgets());
 		
-		System.out.println("Cost w: "+solutionWithCampaign.getCost());
-		System.out.println("Cost no: "+solutionNoCampaign.getCost());
-		double temp =this.computeNewRevenue(day, 
+		//System.out.println("Cost w: "+solutionWithCampaign.getCost()+" Cost no: "+solutionNoCampaign.getCost());
+		double with =this.computeNewRevenue(day, 
 				solutionWithCampaign.getImpressionAssignments(), 
 				setupNoCampaign.getCampaignReaches(), 
 				setupNoCampaign.getCampaignIds(),
 				setupNoCampaign.getImpsToGo(),
 				setupNoCampaign.getStartsAndEnds(),
-				setupNoCampaign.getCampaignBudgets()); 
-		System.out.println("Rev w: "+temp);
-		System.out.println("Rev no: "+solutionNoCampaign.getRevenue());
-		long bid = (long) Math.max(0, (solutionWithCampaign.getCost() - solutionNoCampaign.getCost() 
-				+Math.abs(solutionNoCampaign.getRevenue()-temp)));
+				setupNoCampaign.getCampaignBudgets());
+		double without = solutionNoCampaign.getRevenue();
+//		double without =this.computeNewRevenue(day, 
+//				solutionNoCampaign.getImpressionAssignments(), 
+//				setupNoCampaign.getCampaignReaches(), 
+//				setupNoCampaign.getCampaignIds(),
+//				setupNoCampaign.getImpsToGo(),
+//				setupNoCampaign.getStartsAndEnds(),
+//				setupNoCampaign.getCampaignBudgets()); 
+		System.out.println("Rev w: "+with+" Rev no: "+without);
+		long bid = (long) Math.max(40, (solutionWithCampaign.getCost()-solutionNoCampaign.getCost()+without-with));
 		return bid;
 	}
 
@@ -52,10 +57,10 @@ public class ComputeCampaignBid {
 			Long reach = campaignReaches.get(cmpnID);
 			int days = startsAndEnds.get(cmpnID)[1] - startsAndEnds.get(cmpnID)[0];
 			long toAdd= Math.max(0, (int)(reach*(startsAndEnds.get(cmpnID)[1] - day)/days));
-			System.out.println("To Add: "+toAdd+" total_imp_num: "+total_imp_num+" reach: "+reach);
+			//System.out.println("To Add: "+toAdd+" total_imp_num: "+total_imp_num+" reach: "+reach);
 			double revFromModel = rev_model.get_total_revenue((int)(total_imp_num+toAdd), campaignReaches.get(cmpnID),
 					campaignBudgets.get(cmpnID));
-			System.out.println("revFromModel: "+revFromModel);
+			//System.out.println("revFromModel: "+revFromModel);
 			newRevenue += revFromModel;
 		}
 		return newRevenue;

@@ -20,7 +20,7 @@ public class CostModel {
 	public CostModel(String type)
 	{
 		_type = type;
-		if (_type.equals("young")) total_impressions = total_imps_young;
+		if (type.equals("young")) total_impressions = total_imps_young;
 		if (type.equals("old")) total_impressions = total_imps_old;
 		if (type.equals("female")) total_impressions = total_imps_female;
 		if (type.equals("male")) total_impressions = total_imps_male;
@@ -93,7 +93,7 @@ public class CostModel {
 		double y = (slope * x) + b;
 		
 		// return cost for num impressions
-		System.out.println("5");
+		//System.out.println("5");
 		return y;
 	}
 
