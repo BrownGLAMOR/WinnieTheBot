@@ -47,7 +47,7 @@ public class Greedy_All_Edges extends Linear_Quadratic_Optimizer {
 			int best_campaign = -1;
 			//select most profitable campaign to add to			
 			for (int ut = 0; ut < num_user_types; ut++)
-			{	
+			{
 				// total impressions not a real number
 				if (user_types_imp_count[ut] < cost_models[ut].total_impressions)
 				{

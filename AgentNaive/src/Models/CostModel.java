@@ -4,15 +4,28 @@ import java.util.ArrayList;
 
 public class CostModel {
 	
-	public int total_impressions = 1000;
+	public int total_impressions;
 	private ArrayList<Double[]> dataPoints = new ArrayList<Double[]>();
 	private double hardCodedCost = 0.00000000001;
+	
+	private int total_imps_young = 334;
+	private int total_imps_old = 83;
+	private int total_imps_female = 83;
+	private int total_imps_male = 334;
+	private int total_imps_high = 83;
+	private int total_imps_low = 334;
 	
 	private String _type;
 	
 	public CostModel(String type)
 	{
 		_type = type;
+		if (_type.equals("young")) total_impressions = total_imps_young;
+		if (type.equals("old")) total_impressions = total_imps_old;
+		if (type.equals("female")) total_impressions = total_imps_female;
+		if (type.equals("male")) total_impressions = total_imps_male;
+		if (type.equals("high_income")) total_impressions = total_imps_high;
+		if (type.equals("low_income")) total_impressions = total_imps_low;
 	}
 	
 	public String getType()

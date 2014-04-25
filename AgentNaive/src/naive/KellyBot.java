@@ -497,7 +497,7 @@ public class KellyBot extends Agent {
 			}
 			System.out.println();
 		}
-		 */
+		*/
 		/*
 		System.out.println("reaches = ");
 		for (int key : campaignReaches.keySet())
@@ -514,17 +514,26 @@ public class KellyBot extends Agent {
 		{
 			for (int i = 0; i < queries.length; i++)
 			{
-				System.out.println("hi");
+				//System.out.println("hi");
 				System.out.print(optimizationResults.getImpressionAssignments().get(key)[i]+"   ");
 			}
 			System.out.println();
 		}
-		 */
+		*/
 
 		///////////
 		// THREE //
 		///////////
 		bidBundle = new AdxBidBundle();
+		
+		int[] sumAllocatedUserTypes = new int[queries.length];
+		for (Integer campaignId : optimizationResults.getImpressionAssignments().keySet())
+		{
+			for (int i = 0; i < queries.length; i++)
+			{
+				sumAllocatedUserTypes[i] += optimizationResults.getImpressionAssignments().get(campaignId)[i];
+			}
+		}
 
 		for (CampaignData campaign : myCampaigns.values())
 		{
@@ -562,8 +571,15 @@ public class KellyBot extends Agent {
 							bid = bid * campaign.mobileCoef;
 						//System.out.println("bid = "+bid);
 						//System.out.println("**************");
-						int percent = 1;
-
+						double percentDecimal = ((double)edgeWeight/(double)sumAllocatedUserTypes[i]);
+						percentDecimal = percentDecimal * 1000;
+						
+						int percent = (int) percentDecimal;
+						if (percent == 1000)
+						{
+							percent = 1;
+						}
+					
 						bidBundle.addQuery(queries[i], bid, new Ad(null), campaign.id, percent);
 					}
 				}
@@ -702,7 +718,7 @@ public class KellyBot extends Agent {
 				{
 					for (int i = 0; i < queries.length; i++)
 					{
-						if (costModels[i].getType().equals("hight_income") || costModels[i].getType().equals(""))
+						if (costModels[i].getType().equals("high_income") || costModels[i].getType().equals(""))
 						{
 							costModels[i].addDataPoint(winCount, winCost);
 						}
@@ -844,7 +860,9 @@ public class KellyBot extends Agent {
 			costModels = new CostModel[queries.length];
 			for (int i = 0; i < queries.length; i++)
 			{
-				costModels[i] = new CostModel(MarketSegment.names(queries[i].getMarketSegments()).toLowerCase());
+				String str = MarketSegment.names(queries[i].getMarketSegments()).toLowerCase();
+				str = str.trim();
+				costModels[i] = new CostModel(str);
 			}
 		}
 	}
