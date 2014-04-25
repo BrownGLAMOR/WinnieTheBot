@@ -8,9 +8,12 @@ import Models.CostModel;
 public class Greedy_Rev_First extends Linear_Quadratic_Optimizer {
 
 	@Override
-	public OptimizationResults solve(CostModel[] cost_models,
+	public OptimizationResults solve(int day, CostModel[] cost_models,
 			HashMap<Integer, Boolean[]> connections,
-			HashMap<Integer, Long> campaignReaches) {
+			HashMap<Integer, Long> campaignReaches, 
+			HashMap<Integer, int[]> startsAndEnds,
+			HashMap<Integer, Integer> impsToGo, 
+			HashMap<Integer, Double> campaignBudgets) {
 		// TODO Auto-generated method stub
 		return null;
 	}

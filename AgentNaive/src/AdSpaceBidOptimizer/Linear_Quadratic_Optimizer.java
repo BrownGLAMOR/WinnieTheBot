@@ -21,7 +21,10 @@ public abstract class Linear_Quadratic_Optimizer {
 	//be assigned to each campaign
 	//e.g. <solution>[2][3] = 10 means that 10 impressions
 	//from the user type 2 should be assigned to campaign 3 (both then are indexed from zero)
-	public abstract OptimizationResults solve(CostModel[] cost_models, HashMap<Integer, Boolean[]> connections, HashMap<Integer, Long> campaignReaches);
+	public abstract OptimizationResults solve(int day, CostModel[] cost_models, HashMap<Integer, Boolean[]> connections, 
+			HashMap<Integer, Long> campaignReaches,HashMap<Integer, 
+			int[]> startsAndEnds,HashMap<Integer, Integer> impsSoFar, 
+			HashMap<Integer, Double> campaignBudgets);
 	
 	public abstract String get_name();
 	

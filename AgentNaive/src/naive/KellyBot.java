@@ -278,25 +278,33 @@ public class KellyBot extends Agent {
 		 * A bid of less than 0.1 per 1000 impressions is ignored: we have to bid at least 0.0001
 		 */
 
-		System.out.println("persistant campaign bid: ");
-		System.out.println(String.valueOf(persistantCampaignBid));
+		//System.out.println("persistant campaign bid: ");
+		//System.out.println(String.valueOf(persistantCampaignBid));
 
 		if (persistantCampaignBid < 0.1) {
 			persistantCampaignBid = 0.1;
-			System.out.println("bid was too low");
+			//System.out.println("bid was too low");
 		}
 
 
 		//the campaign auction bid
 		System.out.println("ID = "+pendingCampaign.id);
-//		ProblemSetup setupNoCampaign = createProblemSetup(null); 
-//		double oldBudget = pendingCampaign.getBudget();
-//		//set high so will win all impressions, this should be tuned and maybe thought out
-//		pendingCampaign.setBudget(7000);
-//		ProblemSetup setupWithCampaign = createProblemSetup(pendingCampaign);
-//		long cmpBid = campaignBidComputer.solve(costModels, setupNoCampaign, setupWithCampaign);
-//		pendingCampaign.setBudget(oldBudget);
-		long cmpBid = (long) (persistantCampaignBid * pendingCampaign.reachImps);
+		long cmpBid = 0;
+		if(day>3){
+			ProblemSetup setupNoCampaign = createProblemSetup(null); 
+			double oldBudget = pendingCampaign.getBudget();
+			System.out.println("Old budget: "+oldBudget);
+			//set high so will win all impressions, this should be tuned and maybe thought out
+			pendingCampaign.setBudget(20000);
+			ProblemSetup setupWithCampaign = createProblemSetup(pendingCampaign);
+			cmpBid = campaignBidComputer.solve(day, costModels, setupNoCampaign, setupWithCampaign);
+			pendingCampaign.setBudget(oldBudget);
+		}
+		if(cmpBid <=50){
+			cmpBid = (long) (persistantCampaignBid * pendingCampaign.reachImps);
+		}
+		
+		System.out.println("bid: "+cmpBid);
 
 
 		/*
@@ -405,8 +413,17 @@ public class KellyBot extends Agent {
 		}
 		HashMap<Integer, Boolean[]> matches = new HashMap<Integer, Boolean[]>();
 		HashMap<Integer, Long> campaignReaches = new HashMap<Integer, Long>();
+		HashMap<Integer, Integer> impsToGo = new HashMap<Integer, Integer>();
+		HashMap<Integer, Integer> daysToGo = new HashMap<Integer, Integer>();
+		HashMap<Integer, Double> campaignBudgets = new HashMap<Integer, Double>();
+		HashMap<Integer, int[]> startsAndEnds = new HashMap<Integer, int[]>();
 		for (CampaignData campaign : myCampaigns.values())
 		{
+			impsToGo.put(campaign.id, campaign.impsTogo());
+			daysToGo.put(campaign.id, (int)(campaign.dayEnd-day));
+			campaignBudgets.put(campaign.id, campaign.budget);
+			int[] startAndEnd = {(int) campaign.dayStart,(int) campaign.dayEnd};
+			startsAndEnds.put(campaign.id, startAndEnd);
 			int dayBiddingFor = day + 1;
 			Boolean[] currCampaignMatches = new Boolean[queries.length];
 
@@ -452,7 +469,11 @@ public class KellyBot extends Agent {
 		if (cmp != null){
 			myCampaigns.remove(cmp.id);
 		}
-		return new ProblemSetup(matches,campaignReaches,myCampaigns.keySet());
+		return new ProblemSetup(matches,campaignReaches,
+				myCampaigns.keySet(),
+				impsToGo,daysToGo,
+				startsAndEnds,
+				campaignBudgets);
 	}
 	/**
 	 *
@@ -470,7 +491,10 @@ public class KellyBot extends Agent {
 		ProblemSetup psetup = createProblemSetup(null);
 		HashMap<Integer, Boolean[]> matches = psetup.getMatches();
 		HashMap<Integer, Long> campaignReaches = psetup.getCampaignReaches();
-
+		HashMap<Integer, int[]> startsAndEnds = psetup.getStartsAndEnds();
+		HashMap<Integer, Integer> impsToGo = psetup.getImpsToGo();
+		HashMap<Integer, Double> campaignBudgets= psetup.getCampaignBudgets();
+		
 		System.out.println("1: num campaigns = " + myCampaigns.size());
 
 		// boolean matrix for matches between campaigns and user types
@@ -506,7 +530,8 @@ public class KellyBot extends Agent {
 		}
 		 */
 
-		OptimizationResults optimizationResults = allEdgesOpt.solve(costModels, matches, campaignReaches);
+		OptimizationResults optimizationResults = allEdgesOpt.solve(day,costModels, 
+				matches, campaignReaches,startsAndEnds,impsToGo, campaignBudgets);
 		System.out.println("2");
 
 		/*
@@ -879,7 +904,7 @@ public class KellyBot extends Agent {
 		public void setBudget(double d) {
 			budget = d;
 		}
-		
+
 		public double getBudget() {
 			return budget;
 		}
@@ -911,7 +936,7 @@ public class KellyBot extends Agent {
 		void setStats(CampaignStats s) {
 			stats.setValues(s);
 		}
-		
+
 
 	}
 
