@@ -32,7 +32,7 @@ public class ComputeCampaignBid {
 			for (int imp_num : impressionAssignments.get(cmpnID)){
 				total_imp_num += imp_num;
 			}
-			newRevenue += rev_model.get_total_revenue(total_imp_num+100, reaches.get(cmpnID));
+			newRevenue += rev_model.get_total_revenue(total_imp_num+101, reaches.get(cmpnID));
 		}
 		return newRevenue;
 	}
