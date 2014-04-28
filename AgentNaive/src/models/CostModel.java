@@ -5,7 +5,7 @@ import java.util.ArrayList;
 public class CostModel {
 	
 	public int totalImpressions;
-	private ArrayList<Double[]> dataPoints = new ArrayList<Double[]>();
+	private ArrayList<double[]> dataPoints = new ArrayList<double[]>();
 	private double hardCodedCost = 0.001;
 	
 	
@@ -42,10 +42,10 @@ public class CostModel {
 	}
 	
 	// add known impression count : cost
-	public void addDataPoint(Double numImpressions, Double cost)
+	public void addDataPoint(double numImpressions, double cost)
 	{
 		// x, y where x = num imps and y = cost
-		Double[] point = new Double[2];
+		double[] point = new double[2];
 		point[0] = numImpressions;
 		point[1] = cost;
 		dataPoints.add(point);
@@ -57,15 +57,15 @@ public class CostModel {
 		{
 			return hardCodedCost;
 		}
-		Double distPointLeft = Double.POSITIVE_INFINITY;
-		Double[] pointLeft = new Double[2];
-		Double distPointRight = Double.POSITIVE_INFINITY;
-		Double[] pointRight = new Double[2];
+		double distPointLeft = Double.POSITIVE_INFINITY;
+		double[] pointLeft = new double[2];
+		double distPointRight = Double.POSITIVE_INFINITY;
+		double[] pointRight = new double[2];
 		
 		// find closest point on left and right of numImpressions
 		for (int i = 0; i < dataPoints.size(); i++)
 		{
-			Double[] currPoint = dataPoints.get(i);
+			double[] currPoint = dataPoints.get(i);
 			double currDist = Math.abs(currPoint[0] - numImpressions);
 			if (currDist < distPointLeft && currPoint[0] < numImpressions)
 			{
@@ -105,13 +105,13 @@ public class CostModel {
 		{
 			return hardCodedCost;
 		}
-		Double distPointLeft = Double.POSITIVE_INFINITY;
-		Double[] pointLeft = new Double[2];
+		double distPointLeft = Double.POSITIVE_INFINITY;
+		double[] pointLeft = new double[2];
 		
 		// find closest point on left and right of numImpressions
 		for (int i = 0; i < dataPoints.size(); i++)
 		{
-			Double[] currPoint = dataPoints.get(i);
+			double[] currPoint = dataPoints.get(i);
 			double currDist = Math.abs(currPoint[0] - numImpressions);
 			if (currDist < distPointLeft && currPoint[0] < numImpressions)
 			{
