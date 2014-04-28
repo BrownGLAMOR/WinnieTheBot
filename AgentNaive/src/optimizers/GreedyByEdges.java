@@ -1,39 +1,58 @@
-package AdSpaceBidOptimizer;
+package optimizers;
 
 import java.util.HashMap;
-import Models.CostModel;
-import Models.RevenueModel;
 
-public class Greedy_All_Edges extends Linear_Quadratic_Optimizer {
+import models.CostModel;
+import models.RevenueModel;
 
-	public String get_name(){
-		return "greedy all-edges";
+public class GreedyByEdges extends ImpressionBidsOptimizer {
+	
+	int increment = 10;
+	
+	public OptimizationResults solve(int day, CostModel[] cost_models, ProblemSetup problemSetup) {
+		
+		return solve(day,cost_models, problemSetup.getMatches(), problemSetup.getCampaignReaches(),
+				problemSetup.getStartsAndEnds(),
+				problemSetup.getImpsToGo(), problemSetup.getCampaignBudgets());
+		
 	}
-
-	public OptimizationResults solve(int day, CostModel[] cost_models, HashMap<Integer, Boolean[]> connections, 
+	
+	public OptimizationResults solve(int day, CostModel[] costModels, HashMap<Integer, Boolean[]> connections, 
 			HashMap<Integer, Long> campaignReaches, HashMap<Integer, int[]> startsAndEnds,
 			HashMap<Integer, Integer> impsToGo, HashMap<Integer, Double> campaignBudgets) {
 		// testing
 		final long startTime = System.currentTimeMillis();
 		
 		// constants
-		int num_user_types = cost_models.length;		
+		int num_user_types = costModels.length;		
 		RevenueModel rev_model = new RevenueModel();
-		int increment = 50;
 		
 		// to update
 		double total_revenue = 0;
-		double[] user_types_imp_count = new double[num_user_types];
+		double[] userTypesImpCount = new double[num_user_types];
 		HashMap<Integer, Integer> campaigns_imp_count = new HashMap<Integer, Integer>();
+		
+		//multiday fix, assume each day is the last and that the agent
+		//has already won some impressions
 		HashMap<Integer, Integer> phantomImps = new HashMap<Integer, Integer>();
+		
+		//construct calculate data
 		for (Integer campaignId : connections.keySet())
 		{
+			//number assigned to this contract for today
 		    campaigns_imp_count.put(campaignId, 0);
+		    
+		    //goal number of impressions for this campaign
 		    Long reach = campaignReaches.get(campaignId);
+		    
+		    //days in campaign
             int days = startsAndEnds.get(campaignId)[1] - startsAndEnds.get(campaignId)[0];
             
+            //fake impressions to include
 		    phantomImps.put(campaignId, Math.max(0, (int)(reach*(startsAndEnds.get(campaignId)[1] - day)/days)));
-		    total_revenue+= rev_model.get_total_revenue(phantomImps.get(campaignId), reach, campaignBudgets.get(campaignId));
+		    
+		    //revenue from former and phantom imps
+		    total_revenue+= rev_model.get_total_revenue((int)(phantomImps.get(campaignId)+campaignReaches.get(campaignId)-impsToGo.get(campaignId)), reach, campaignBudgets.get(campaignId));
 		}
 		Boolean still_profitable = true;
 		
@@ -42,34 +61,43 @@ public class Greedy_All_Edges extends Linear_Quadratic_Optimizer {
 		
 		double total_cost = 0;
 		HashMap<Integer, int[]> allEdges = new HashMap<Integer, int[]>();
+		//initialize edges
 		for (Integer campaignId : connections.keySet())
 		{
+			//num=num+1;
 			allEdges.put(campaignId, new int[num_user_types]);
 		}
-	
+		
+		//while some edge is profitable, increment the most profitable edge
 		while(still_profitable){
 			double best_profit = 0.0;
 			double best_cost = 0.0;
 			double best_revenue = 0.0;
+			
 			int best_user_type = -1;
 			int best_campaign = -1;
+			
 			//select most profitable campaign to add to			
 			for (int ut = 0; ut < num_user_types; ut++)
 			{
 				// total impressions not a real number
-				if (user_types_imp_count[ut] < cost_models[ut].total_impressions)
+				if (userTypesImpCount[ut] < costModels[ut].totalImpressions)
 				{
-					for (Integer campaignId : connections.keySet())
+					//for each campaign
+					for (int campaignId : connections.keySet())
 					{
+						//if there is an edge here
 						if (connections.get(campaignId)[ut])
 						{		
-							double new_rev = 
-									rev_model.get_incremental_revenue((int)(campaignReaches.get(campaignId)-impsToGo.get(campaignId))+phantomImps.get(campaignId)+campaigns_imp_count.get(campaignId), 
+							//number of imps before (won so far + phantom imps+ added by alg. already)
+							int numImpsStart = (int)(campaignReaches.get(campaignId)-impsToGo.get(campaignId))+phantomImps.get(campaignId)+campaigns_imp_count.get(campaignId);
+							double new_rev = rev_model.get_incremental_revenue(numImpsStart, 
 											campaignReaches.get(campaignId), increment,campaignBudgets.get(campaignId));
-							double new_cost = cost_models[ut].get_incremental_cost_twoPts(user_types_imp_count[ut], increment);
+							double new_cost = costModels[ut].get_incremental_cost_twoPts(userTypesImpCount[ut], increment);
 							//System.out.println("cost: "+new_cost);
 							double new_profit = new_rev - new_cost;
 							
+							//if best so far, track it
 							if (new_profit > best_profit) {	
 								best_user_type = ut;
 								best_campaign = campaignId;
@@ -81,10 +109,10 @@ public class Greedy_All_Edges extends Linear_Quadratic_Optimizer {
 					}
 				}
 			}
-						
+			//if found an edge to increment, make increment
 			if (best_profit > 0)
 			{	
-				user_types_imp_count[best_user_type] += increment;
+				userTypesImpCount[best_user_type] += increment;
 				campaigns_imp_count.put(best_campaign, campaigns_imp_count.get(best_campaign)+increment);
 				
 				int[] currArray = allEdges.get(best_campaign);
@@ -101,9 +129,13 @@ public class Greedy_All_Edges extends Linear_Quadratic_Optimizer {
 		}
 		
 		final long endTime = System.currentTimeMillis();
-		System.out.println("time = "+(endTime-startTime));
+		System.out.println("time = "+(endTime-startTime));//+" num: "+num);
 		results = new OptimizationResults(total_revenue, total_cost, allEdges);
 		return results;
+	}
+	
+	public String get_name(){
+		return "greedy all-edges";
 	}
 
 }

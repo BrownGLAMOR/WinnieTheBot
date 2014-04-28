@@ -15,11 +15,13 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import AdSpaceBidOptimizer.ComputeCampaignBid;
-import AdSpaceBidOptimizer.Greedy_All_Edges;
-import AdSpaceBidOptimizer.OptimizationResults;
-import AdSpaceBidOptimizer.ProblemSetup;
-import Models.CostModel;
+import models.CostModel;
+
+import optimizers.ComputeCampaignBid;
+import optimizers.GreedyByEdges;
+import optimizers.OptimizationResults;
+import optimizers.ProblemSetup;
+
 import se.sics.isl.transport.Transportable;
 import se.sics.tasim.aw.Agent;
 import se.sics.tasim.aw.Message;
@@ -108,7 +110,7 @@ public class KellyBot extends Agent {
 	// cost model for each query
 	private CostModel[] costModels;
 
-	private Greedy_All_Edges allEdgesOpt = new Greedy_All_Edges();
+	private GreedyByEdges impressionOptimizer = new GreedyByEdges();
 	private ComputeCampaignBid campaignBidComputer = new ComputeCampaignBid();
 
 	/**
@@ -288,23 +290,23 @@ public class KellyBot extends Agent {
 
 
 		//the campaign auction bid
-		System.out.println("ID = "+pendingCampaign.id);
+		//System.out.println("ID = "+pendingCampaign.id);
 		long cmpBid = 0;
 		if(day>3){
 			ProblemSetup setupNoCampaign = createProblemSetup(null); 
 			double oldBudget = pendingCampaign.getBudget();
-			System.out.println("Old budget: "+oldBudget);
 			//set high so will win all impressions, this should be tuned and maybe thought out
 			pendingCampaign.setBudget(10000);
 			ProblemSetup setupWithCampaign = createProblemSetup(pendingCampaign);
 			cmpBid = campaignBidComputer.solve(day, costModels, setupNoCampaign, setupWithCampaign);
 			pendingCampaign.setBudget(oldBudget);
 		}
-		if(cmpBid <=40){
+		if(cmpBid <40){
+			System.out.println("Here");
 			cmpBid = (long) (persistantCampaignBid * pendingCampaign.reachImps);
 		}
-		
-		System.out.println("bid: "+cmpBid);
+
+		//System.out.println("bid: "+cmpBid);
 
 
 		/*
@@ -417,18 +419,25 @@ public class KellyBot extends Agent {
 		HashMap<Integer, Integer> daysToGo = new HashMap<Integer, Integer>();
 		HashMap<Integer, Double> campaignBudgets = new HashMap<Integer, Double>();
 		HashMap<Integer, int[]> startsAndEnds = new HashMap<Integer, int[]>();
+		Boolean[] currCampaignMatches = new Boolean[queries.length];
+
+		//for each campaign, extract the needed data
 		for (CampaignData campaign : myCampaigns.values())
 		{
-			impsToGo.put(campaign.id, campaign.impsTogo());
-			daysToGo.put(campaign.id, (int)(campaign.dayEnd-day));
-			campaignBudgets.put(campaign.id, campaign.budget);
-			int[] startAndEnd = {(int) campaign.dayStart,(int) campaign.dayEnd};
-			startsAndEnds.put(campaign.id, startAndEnd);
-			int dayBiddingFor = day + 1;
-			Boolean[] currCampaignMatches = new Boolean[queries.length];
+			//simple data to copy over
 
-			if ((dayBiddingFor >= campaign.dayStart) && (dayBiddingFor <= campaign.dayEnd) && (campaign.impsTogo() >= 0))
+			int dayBiddingFor = day + 1;
+			//if it makes sense to bid on this campaign, make a link in the graph
+			if ((dayBiddingFor+1 >= campaign.dayStart) && (dayBiddingFor <= campaign.dayEnd) && (campaign.impsTogo() >= 0))
 			{
+				//simple data to copy over
+				impsToGo.put(campaign.id, campaign.impsTogo());
+				daysToGo.put(campaign.id, (int)(campaign.dayEnd-day));
+				campaignBudgets.put(campaign.id, campaign.budget);
+				int[] startAndEnd = {(int) campaign.dayStart,(int) campaign.dayEnd};
+				startsAndEnds.put(campaign.id, startAndEnd);
+
+				
 				for (int i = 0; i < queries.length; i++)
 				{
 					// think there is only one item in queries[i]
@@ -483,19 +492,14 @@ public class KellyBot extends Agent {
 		// ONE: populate boolean matrix of campaigns to user types
 		// TWO: run optimization
 		// THREE: format output for bid bundle
-		// that percent thing -- one cell / total in row
 
 		/////////
 		// ONE //
 		/////////
-		ProblemSetup psetup = createProblemSetup(null);
-		HashMap<Integer, Boolean[]> matches = psetup.getMatches();
-		HashMap<Integer, Long> campaignReaches = psetup.getCampaignReaches();
-		HashMap<Integer, int[]> startsAndEnds = psetup.getStartsAndEnds();
-		HashMap<Integer, Integer> impsToGo = psetup.getImpsToGo();
-		HashMap<Integer, Double> campaignBudgets= psetup.getCampaignBudgets();
-		
-		System.out.println("1: num campaigns = " + myCampaigns.size());
+
+		ProblemSetup problemSetup = createProblemSetup(null);
+
+		System.out.println("Num campaigns = " + myCampaigns.size());
 
 		// boolean matrix for matches between campaigns and user types
 
@@ -505,7 +509,6 @@ public class KellyBot extends Agent {
 		/////////
 		// TWO //
 		/////////
-
 
 		//System.out.println("cost models ="+costModels.length);
 		//System.out.println("matches = ");
@@ -521,7 +524,7 @@ public class KellyBot extends Agent {
 			}
 			System.out.println();
 		}
-		*/
+		 */
 		/*
 		System.out.println("reaches = ");
 		for (int key : campaignReaches.keySet())
@@ -530,8 +533,8 @@ public class KellyBot extends Agent {
 		}
 		 */
 
-		OptimizationResults optimizationResults = allEdgesOpt.solve(day,costModels, 
-				matches, campaignReaches,startsAndEnds,impsToGo, campaignBudgets);
+		OptimizationResults optimizationResults = impressionOptimizer.solve(day,costModels, 
+				problemSetup);
 		//System.out.println("2");
 
 		/*
@@ -544,13 +547,25 @@ public class KellyBot extends Agent {
 			}
 			System.out.println();
 		}
-		*/
+		 */
 
 		///////////
 		// THREE //
 		///////////
+		bidBundle = makeBidBundle(optimizationResults);
+
+		if (bidBundle != null)
+		{
+			//log.info("Day " + day + ": Sending BidBundle");
+			sendMessage(adxAgentAddress, bidBundle);
+		}
+	}
+
+
+	private AdxBidBundle makeBidBundle(OptimizationResults optimizationResults){
+
 		bidBundle = new AdxBidBundle();
-		
+
 		int[] sumAllocatedUserTypes = new int[queries.length];
 		for (Integer campaignId : optimizationResults.getImpressionAssignments().keySet())
 		{
@@ -598,13 +613,13 @@ public class KellyBot extends Agent {
 						//System.out.println("**************");
 						double percentDecimal = ((double)edgeWeight/(double)sumAllocatedUserTypes[i]);
 						percentDecimal = percentDecimal * 1000;
-						
+
 						int percent = (int) percentDecimal;
 						if (percent == 1000)
 						{
 							percent = 1;
 						}
-					
+
 						bidBundle.addQuery(queries[i], bid, new Ad(null), campaign.id, percent);
 					}
 				}
@@ -619,14 +634,7 @@ public class KellyBot extends Agent {
 				bidBundle.setCampaignDailyLimit(campaign.id, (int) impressionLimit, budgetLimit);
 			}
 		}
-
-		//System.out.println("3");
-
-		if (bidBundle != null)
-		{
-			//log.info("Day " + day + ": Sending BidBundle");
-			sendMessage(adxAgentAddress, bidBundle);
-		}
+		return bidBundle;
 	}
 
 	/**

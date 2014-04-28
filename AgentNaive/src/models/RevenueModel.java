@@ -1,4 +1,4 @@
-package Models;
+package models;
 
 public class RevenueModel {
 	
@@ -15,7 +15,7 @@ public class RevenueModel {
 		double atan1Two = Math.atan((a * (numImpressions+increment) / campaignReach) - b);
 		double atan2Two = Math.atan(-b);
 		double newRev = (2/a) * (atan1Two - atan2Two);
-		
+		//System.out.print("Budget: "+budget);
 		return (newRev - currRev)*budget;
 	}
 
@@ -26,7 +26,7 @@ public class RevenueModel {
 		double atan1 = Math.atan((a * numImpressions / campaignReach) - b);
 		double atan2 = Math.atan(-b);
 		double currRev = (2/a) * (atan1 - atan2);
-		
+		//System.out.println("Budget: "+budget);
 		return currRev*budget;
 	}
 	

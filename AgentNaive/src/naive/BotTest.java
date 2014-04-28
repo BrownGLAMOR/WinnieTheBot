@@ -11,6 +11,10 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import models.CostModel;
+
+import optimizers.GreedyByEdges;
+
 import se.sics.isl.transport.Transportable;
 import se.sics.tasim.aw.Agent;
 import se.sics.tasim.aw.Message;
@@ -36,8 +40,6 @@ import tau.tac.adx.report.publisher.AdxPublisherReportEntry;
 import edu.umich.eecs.tac.props.Ad;
 import edu.umich.eecs.tac.props.BankStatus;
 
-import AdSpaceBidOptimizer.Greedy_All_Edges;
-import Models.CostModel;
 
 /**
  * 

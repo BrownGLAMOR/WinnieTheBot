@@ -1,9 +1,10 @@
-package AdSpaceBidOptimizer;
+package optimizers;
 
 import java.util.HashMap;
 
-import Models.CostModel;
-import Models.RevenueModel;
+import models.CostModel;
+import models.RevenueModel;
+
 
 /*
  * 
@@ -13,7 +14,7 @@ import Models.RevenueModel;
  * 
  */
 
-public abstract class Linear_Quadratic_Optimizer {
+public abstract class ImpressionBidsOptimizer {
 	
 	//takes as inputs an array of the cost models for each user type and an array of the revenue
 	//models for each campaign
@@ -25,6 +26,8 @@ public abstract class Linear_Quadratic_Optimizer {
 			HashMap<Integer, Long> campaignReaches,HashMap<Integer, 
 			int[]> startsAndEnds,HashMap<Integer, Integer> impsSoFar, 
 			HashMap<Integer, Double> campaignBudgets);
+	
+	public abstract OptimizationResults solve(int day, CostModel[] cost_models, ProblemSetup problemSetup);
 	
 	public abstract String get_name();
 	

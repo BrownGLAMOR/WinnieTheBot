@@ -1,11 +1,12 @@
-package AdSpaceBidOptimizer;
+package optimizers;
 
 import java.util.HashMap;
 
-import Models.CostModel;
+import models.CostModel;
+
 
 //
-public class Greedy_Rev_First extends Linear_Quadratic_Optimizer {
+public class GreedyRevFirst extends ImpressionBidsOptimizer {
 
 	@Override
 	public OptimizationResults solve(int day, CostModel[] cost_models,
@@ -80,4 +81,11 @@ public class Greedy_Rev_First extends Linear_Quadratic_Optimizer {
 //		return impression_assignments;
 //	}
 //
+
+	@Override
+	public OptimizationResults solve(int day, CostModel[] cost_models,
+			ProblemSetup problemSetup) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

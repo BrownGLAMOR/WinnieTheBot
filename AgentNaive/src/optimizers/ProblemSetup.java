@@ -1,4 +1,4 @@
-package AdSpaceBidOptimizer;
+package optimizers;
 
 import java.util.HashMap;
 import java.util.Set;

@@ -1,4 +1,4 @@
-package Models;
+package models;
 //ADD commons-math3-3.2.jar TO CLASSPATH WHEN COMPILING/RUNNING FOR THIS TO WORK
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;

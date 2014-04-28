@@ -1,12 +1,13 @@
-package Models;
+package models;
 
 import java.util.ArrayList;
 
 public class CostModel {
 	
-	public int total_impressions;
+	public int totalImpressions;
 	private ArrayList<Double[]> dataPoints = new ArrayList<Double[]>();
-	private double hardCodedCost = 0.00000000001;
+	private double hardCodedCost = 0.001;
+	
 	
 	private int total_imps_young = 334;
 	private int total_imps_old = 83;
@@ -19,13 +20,14 @@ public class CostModel {
 	
 	public CostModel(String type)
 	{
+		//hardCodedCost = 0.000001;
 		_type = type;
-		if (type.equals("young")) total_impressions = total_imps_young;
-		if (type.equals("old")) total_impressions = total_imps_old;
-		if (type.equals("female")) total_impressions = total_imps_female;
-		if (type.equals("male")) total_impressions = total_imps_male;
-		if (type.equals("high_income")) total_impressions = total_imps_high;
-		if (type.equals("low_income")) total_impressions = total_imps_low;
+		if (type.equals("young")) totalImpressions = total_imps_young;
+		if (type.equals("old")) totalImpressions = total_imps_old;
+		if (type.equals("female")) totalImpressions = total_imps_female;
+		if (type.equals("male")) totalImpressions = total_imps_male;
+		if (type.equals("high_income")) totalImpressions = total_imps_high;
+		if (type.equals("low_income")) totalImpressions = total_imps_low;
 	}
 	
 	public String getType()
