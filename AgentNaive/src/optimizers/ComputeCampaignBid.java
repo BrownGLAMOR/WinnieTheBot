@@ -4,21 +4,20 @@ import java.util.HashMap;
 import java.util.Set;
 
 import models.CostModel;
+import models.CostModelGeneral;
 import models.RevenueModel;
 
 
 /* ComputeCampaignBid class calculates the new bid we place on subsequent campaign. */
 public class ComputeCampaignBid extends CampaignBidOptimizer{
 
-	public long solve (int day, CostModel[] cost_models, ProblemSetup setupNoCampaign, ProblemSetup setupWithCampaign){
-
+	public long solve (int day, CostModelGeneral[] cost_models, ProblemSetup setupNoCampaign, ProblemSetup setupWithCampaign){
 		GreedyByEdges solver = new GreedyByEdges();
 		//find Solution with the campaign
 		OptimizationResults solutionWithCampaign = solver.solve(day,cost_models, setupWithCampaign.getMatches(), 
 				setupWithCampaign.getCampaignReaches(), 
 				setupWithCampaign.getStartsAndEnds(),setupWithCampaign.getImpsToGo(),
 				setupWithCampaign.getCampaignBudgets());
-
 		//find solution without the campaign
 		OptimizationResults solutionNoCampaign = solver.solve(day,cost_models, 
 				setupNoCampaign.getMatches(), setupNoCampaign.getCampaignReaches(), 
@@ -26,7 +25,6 @@ public class ComputeCampaignBid extends CampaignBidOptimizer{
 				setupNoCampaign.getCampaignBudgets());
 		//double costDiff = calcCostDiff(setupNoCampaign,setupWithCampaign);
 		//System.out.println("Cost w: "+solutionWithCampaign.getCost()+" Cost no: "+solutionNoCampaign.getCost());
-
 		//Calculate the revenue with the campaign
 		double with =this.computeNewRevenue(day, 
 				solutionWithCampaign.getImpressionAssignments(), 
@@ -35,7 +33,6 @@ public class ComputeCampaignBid extends CampaignBidOptimizer{
 				setupNoCampaign.getImpsToGo(),
 				setupNoCampaign.getStartsAndEnds(),
 				setupNoCampaign.getCampaignBudgets());
-		
 		//Calculate the revenue without the 
 		//double without = solutionNoCampaign.getRevenue();
 		double without =this.computeNewRevenue(day, 
@@ -74,7 +71,7 @@ public class ComputeCampaignBid extends CampaignBidOptimizer{
 		RevenueModel rev_model = new RevenueModel();
 		//for each campaign, if the campaign is still valid, add it's revenue to the total
 		for (int cmpnID : campaign_ids){
-			if(startsAndEnds.get(cmpnID)[1]>day){
+			if(startsAndEnds.get(cmpnID) != null && startsAndEnds.get(cmpnID)[1]>day){
 				
 				int total_imp_num = 0;
 				for (int imp_num : impressionAssignments.get(cmpnID)){

@@ -2,8 +2,8 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry kind="lib" path="/home/betsy/TACAdX_competition/adx-1.2.4.jar"/>
-	<classpathentry kind="lib" path="/home/betsy/TACAdX_competition/commons-lang3-3.1.jar"/>
-	<classpathentry kind="lib" path="/gpfs/main/home/betsy/TACAdX_competition/commons-math3-3.2.jar"/>
+	<classpathentry kind="lib" path="/Users/kellybuckley/Desktop/Docs/Spring14/Thesis/adx/AdX-1.2.5/adx-agnet/lib/adx-1.2.5.jar"/>
+	<classpathentry kind="lib" path="/Users/kellybuckley/Desktop/Docs/Spring14/Thesis/adx/AdX-1.2.5/adx-agnet/lib/commons-lang3-3.1.jar"/>
+	<classpathentry kind="lib" path="/Users/kellybuckley/Dropbox/tac_adx_kelly/commons-math3-3.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

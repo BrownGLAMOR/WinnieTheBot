@@ -2,25 +2,24 @@ package models;
 
 import java.util.ArrayList;
 
-public class CostModel {
+public class CostModel extends CostModelGeneral {
 	
-	public int totalImpressions;
+	private int totalImpressions;
 	private ArrayList<double[]> dataPoints = new ArrayList<double[]>();
 	private double hardCodedCost = 0.001;
 	
 	
-	private int total_imps_young = 334;
-	private int total_imps_old = 83;
-	private int total_imps_female = 83;
-	private int total_imps_male = 334;
-	private int total_imps_high = 83;
-	private int total_imps_low = 334;
+	private int total_imps_young = 800;
+	private int total_imps_old = 200;
+	private int total_imps_female = 200;
+	private int total_imps_male = 800;
+	private int total_imps_high = 200;
+	private int total_imps_low = 800;
 	
 	private String _type;
 	
 	public CostModel(String type)
 	{
-		//hardCodedCost = 0.000001;
 		_type = type;
 		if (type.equals("young")) totalImpressions = total_imps_young;
 		if (type.equals("old")) totalImpressions = total_imps_old;
@@ -35,8 +34,13 @@ public class CostModel {
 		return _type;
 	}
 	
+	public int getTotalImpressions()
+	{
+		return totalImpressions;
+	}
+	
 	// cost for one more impressions
-	public double get_incremental_cost(double numImpressions, int increment)
+	public double get_incremental_cost_old(double numImpressions, int increment)
 	{
 		return hardCodedCost * increment;
 	}
@@ -51,11 +55,11 @@ public class CostModel {
 		dataPoints.add(point);
 	}
 	
-	public double get_incremental_cost_twoPts(double numImpressions, int increment)
+	public double get_incremental_cost(double numImpressions, int increment)
 	{
 		if (dataPoints.size() < 2)
 		{
-			return hardCodedCost;
+			return hardCodedCost * increment;
 		}
 		double distPointLeft = Double.POSITIVE_INFINITY;
 		double[] pointLeft = new double[2];
@@ -93,10 +97,11 @@ public class CostModel {
 		
 		// calculate cost based on where numImpressions (aka x) hits that line
 		double y = (slope * x) + b;
+		double y2 = (slope * (x+1)) + b;
 		
 		// return cost for num impressions
 		//System.out.println("5");
-		return y;
+		return (y2 - y)*increment;
 	}
 
 	public double get_incremental_cost_fast(double numImpressions, int increment)
@@ -127,7 +132,7 @@ public class CostModel {
 		}
 
 		// return cost for num impressions
-		return pointLeft[1];
+		return (pointLeft[1]/numImpressions)*increment;
 	}
 
 }

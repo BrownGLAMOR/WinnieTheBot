@@ -3,13 +3,14 @@ package optimizers;
 import java.util.HashMap;
 
 import models.CostModel;
+import models.CostModelGeneral;
 import models.RevenueModel;
 
 public class GreedyByEdges extends ImpressionBidsOptimizer {
 	
-	int increment = 10;
+	int increment = 5;
 	
-	public OptimizationResults solve(int day, CostModel[] cost_models, ProblemSetup problemSetup) {
+	public OptimizationResults solve(int day, CostModelGeneral[] cost_models, ProblemSetup problemSetup) {
 		
 		return solve(day,cost_models, problemSetup.getMatches(), problemSetup.getCampaignReaches(),
 				problemSetup.getStartsAndEnds(),
@@ -17,7 +18,7 @@ public class GreedyByEdges extends ImpressionBidsOptimizer {
 		
 	}
 	
-	public OptimizationResults solve(int day, CostModel[] costModels, HashMap<Integer, Boolean[]> connections, 
+	public OptimizationResults solve(int day, CostModelGeneral[] costModels, HashMap<Integer, Boolean[]> connections, 
 			HashMap<Integer, Long> campaignReaches, HashMap<Integer, int[]> startsAndEnds,
 			HashMap<Integer, Integer> impsToGo, HashMap<Integer, Double> campaignBudgets) {
 		// testing
@@ -32,27 +33,28 @@ public class GreedyByEdges extends ImpressionBidsOptimizer {
 		double[] userTypesImpCount = new double[num_user_types];
 		HashMap<Integer, Integer> campaigns_imp_count = new HashMap<Integer, Integer>();
 		
+		
 		//multiday fix, assume each day is the last and that the agent
 		//has already won some impressions
 		HashMap<Integer, Integer> phantomImps = new HashMap<Integer, Integer>();
-		
 		//construct calculate data
 		for (Integer campaignId : connections.keySet())
 		{
 			//number assigned to this contract for today
 		    campaigns_imp_count.put(campaignId, 0);
-		    
 		    //goal number of impressions for this campaign
 		    Long reach = campaignReaches.get(campaignId);
-		    
 		    //days in campaign
-            int days = startsAndEnds.get(campaignId)[1] - startsAndEnds.get(campaignId)[0];
-            
-            //fake impressions to include
-		    phantomImps.put(campaignId, Math.max(0, (int)(reach*(startsAndEnds.get(campaignId)[1] - day)/days)));
 		    
-		    //revenue from former and phantom imps
-		    total_revenue+= rev_model.get_total_revenue((int)(phantomImps.get(campaignId)+campaignReaches.get(campaignId)-impsToGo.get(campaignId)), reach, campaignBudgets.get(campaignId));
+		    if (startsAndEnds.containsKey(campaignId) && startsAndEnds.get(campaignId) != null)
+		    {
+		    	int days = startsAndEnds.get(campaignId)[1] - startsAndEnds.get(campaignId)[0];	
+		    	//fake impressions to include
+			    phantomImps.put(campaignId, Math.max(0, (int)(reach*(startsAndEnds.get(campaignId)[1] - day)/days)));
+			    //revenue from former and phantom imps
+			    //total_revenue+= rev_model.get_total_revenue((int)(phantomImps.get(campaignId)+campaignReaches.get(campaignId)-impsToGo.get(campaignId)), reach, campaignBudgets.get(campaignId));
+		    } 
+
 		}
 		Boolean still_profitable = true;
 		
@@ -67,7 +69,6 @@ public class GreedyByEdges extends ImpressionBidsOptimizer {
 			//num=num+1;
 			allEdges.put(campaignId, new int[num_user_types]);
 		}
-		
 		//while some edge is profitable, increment the most profitable edge
 		while(still_profitable){
 			double best_profit = 0.0;
@@ -81,22 +82,27 @@ public class GreedyByEdges extends ImpressionBidsOptimizer {
 			for (int ut = 0; ut < num_user_types; ut++)
 			{
 				// total impressions not a real number
-				if (userTypesImpCount[ut] < costModels[ut].totalImpressions)
+				if (userTypesImpCount[ut] < costModels[ut].getTotalImpressions())
 				{
 					//for each campaign
 					for (int campaignId : connections.keySet())
 					{
 						//if there is an edge here
-						if (connections.get(campaignId)[ut])
+						if (connections.get(campaignId)[ut])// && phantomImps.containsKey(campaignId))
 						{		
 							//number of imps before (won so far + phantom imps+ added by alg. already)
-							int numImpsStart = (int)(campaignReaches.get(campaignId)-impsToGo.get(campaignId))+phantomImps.get(campaignId)+campaigns_imp_count.get(campaignId);
+							//int numImpsStart = (int)(campaignReaches.get(campaignId)-impsToGo.get(campaignId))+phantomImps.get(campaignId)+campaigns_imp_count.get(campaignId);
+							int numImpsStart = campaigns_imp_count.get(campaignId);
+							System.out.println("numImpsStart = "+numImpsStart);
+							System.out.println("reach = "+campaignReaches.get(campaignId));
+							System.out.println("budget = "+campaignBudgets.get(campaignId)); // NULL!!!
 							double new_rev = rev_model.get_incremental_revenue(numImpsStart, 
 											campaignReaches.get(campaignId), increment,campaignBudgets.get(campaignId));
-							double new_cost = costModels[ut].get_incremental_cost_twoPts(userTypesImpCount[ut], increment);
-							//System.out.println("cost: "+new_cost);
+							double new_cost = costModels[ut].get_incremental_cost(userTypesImpCount[ut], increment);
 							double new_profit = new_rev - new_cost;
-							
+							//System.out.println("rev: "+new_rev);
+							//System.out.println("cost: "+new_cost);
+							//System.out.println("profit: "+new_profit);
 							//if best so far, track it
 							if (new_profit > best_profit) {	
 								best_user_type = ut;
@@ -127,7 +133,6 @@ public class GreedyByEdges extends ImpressionBidsOptimizer {
 				still_profitable = false;
 			}
 		}
-		
 		final long endTime = System.currentTimeMillis();
 		System.out.println("time = "+(endTime-startTime));//+" num: "+num);
 		results = new OptimizationResults(total_revenue, total_cost, allEdges);

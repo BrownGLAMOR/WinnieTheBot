@@ -16,12 +16,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import models.CostModel;
-
+import models.CostModelGeneral;
+import models.CostModelOLS;
 import optimizers.ComputeCampaignBid;
 import optimizers.GreedyByEdges;
 import optimizers.OptimizationResults;
 import optimizers.ProblemSetup;
-
 import se.sics.isl.transport.Transportable;
 import se.sics.tasim.aw.Agent;
 import se.sics.tasim.aw.Message;
@@ -108,7 +108,13 @@ public class KellyBot extends Agent {
 	protected AdxQuery[] queries;
 
 	// cost model for each query
-	private CostModel[] costModels;
+	private CostModelGeneral[] costModels;
+	private String costModelFileFemale = "/Users/kellybuckley/Desktop/Docs/Spring14/Thesis/adx/AdX-1.2.5/costModelFileFemale.csv";
+	private String costModelFileMale = "/Users/kellybuckley/Desktop/Docs/Spring14/Thesis/adx/AdX-1.2.5/costModelFileMale.csv";
+	private String costModelFileHigh = "/Users/kellybuckley/Desktop/Docs/Spring14/Thesis/adx/AdX-1.2.5/costModelFileHigh.csv";
+	private String costModelFileLow = "/Users/kellybuckley/Desktop/Docs/Spring14/Thesis/adx/AdX-1.2.5/costModelFileLow.csv";
+	private String costModelFileYoung = "/Users/kellybuckley/Desktop/Docs/Spring14/Thesis/adx/AdX-1.2.5/costModelFileYoung.csv";
+	private String costModelFileOld = "/Users/kellybuckley/Desktop/Docs/Spring14/Thesis/adx/AdX-1.2.5/costModelFileOld.csv";
 
 	private GreedyByEdges impressionOptimizer = new GreedyByEdges();
 	private ComputeCampaignBid campaignBidComputer = new ComputeCampaignBid();
@@ -190,7 +196,10 @@ public class KellyBot extends Agent {
 				handleStartInfo((StartInfo) content);
 			} else if (content instanceof BankStatus) {
 				handleBankStatus((BankStatus) content);
-			} else {
+			} else if(content instanceof CampaignAuctionReport) {
+				hadnleCampaignAuctionReport((CampaignAuctionReport) content);
+			} 
+			else {
 				log.info("UNKNOWN Message Received: " + content);
 			}
 
@@ -199,6 +208,10 @@ public class KellyBot extends Agent {
 					"Exception thrown while trying to parse message." + e);
 			return;
 		}
+	}
+	
+	private void hadnleCampaignAuctionReport(CampaignAuctionReport content) {
+		// ingoring
 	}
 
 	private void handleBankStatus(BankStatus content) {
@@ -261,9 +274,8 @@ public class KellyBot extends Agent {
 	 */
 	private void handleICampaignOpportunityMessage(
 			CampaignOpportunityMessage com) {
-
 		day = com.getDay();
-
+		
 		pendingCampaign = new CampaignData(com);
 		//log.info("Day " + day + ": Campaign opportunity - " + pendingCampaign);
 
@@ -288,11 +300,10 @@ public class KellyBot extends Agent {
 			//System.out.println("bid was too low");
 		}
 
-
 		//the campaign auction bid
 		//System.out.println("ID = "+pendingCampaign.id);
 		long cmpBid = 0;
-		if(day>3){
+		if(day>20){//3){
 			ProblemSetup setupNoCampaign = createProblemSetup(null); 
 			double oldBudget = pendingCampaign.getBudget();
 			//set high so will win all impressions, this should be tuned and maybe thought out
@@ -302,12 +313,8 @@ public class KellyBot extends Agent {
 			pendingCampaign.setBudget(oldBudget);
 		}
 		if(cmpBid <40){
-			System.out.println("Here");
 			cmpBid = (long) (persistantCampaignBid * pendingCampaign.reachImps);
 		}
-
-		//System.out.println("bid: "+cmpBid);
-
 
 		/*
 		 * Adjust ucs bid s.t. target level is achieved. Note: The bid for the
@@ -342,7 +349,7 @@ public class KellyBot extends Agent {
 			//log.info("Day " + day + ": Initial ucs bid is " + ucsBid);
 		}
 
-
+		
 		log.info(agentName + " " + "DAY " + day + " bid: " + cmpBid + " qs: " + qualityRating);
 
 		/* Note: Campaign bid is in millis */
@@ -413,6 +420,7 @@ public class KellyBot extends Agent {
 		if (cmp != null) {
 			myCampaigns.put(cmp.id,cmp);
 		}
+		System.out.println("cmp = "+cmp);
 		HashMap<Integer, Boolean[]> matches = new HashMap<Integer, Boolean[]>();
 		HashMap<Integer, Long> campaignReaches = new HashMap<Integer, Long>();
 		HashMap<Integer, Integer> impsToGo = new HashMap<Integer, Integer>();
@@ -424,11 +432,12 @@ public class KellyBot extends Agent {
 		//for each campaign, extract the needed data
 		for (CampaignData campaign : myCampaigns.values())
 		{
+			System.out.println("ID = "+campaign.id);
 			//simple data to copy over
 
 			int dayBiddingFor = day + 1;
 			//if it makes sense to bid on this campaign, make a link in the graph
-			if ((dayBiddingFor+1 >= campaign.dayStart) && (dayBiddingFor <= campaign.dayEnd) && (campaign.impsTogo() >= 0))
+			if ((dayBiddingFor+1 >= campaign.dayStart) && (dayBiddingFor <= campaign.dayEnd) && (campaign.impsTogo() > 0))
 			{
 				//simple data to copy over
 				impsToGo.put(campaign.id, campaign.impsTogo());
@@ -446,7 +455,7 @@ public class KellyBot extends Agent {
 					{
 						for (MarketSegment marketSegment : segmentsList)
 						{
-							if (campaign.targetSegments.contains(marketSegment))
+							if (campaign.targetSegment.contains(marketSegment))
 							{
 								currCampaignMatches[i] = true;
 							}
@@ -464,25 +473,53 @@ public class KellyBot extends Agent {
 				}
 			}
 			else
-			{
+			{				
 				for (int i = 0; i < queries.length; i++)
 				{
 					currCampaignMatches[i] = false;
 				}
 			}
-
+			
 			matches.put(campaign.id, currCampaignMatches);
+			
 			// store campaign reach (need for revenue)
 			campaignReaches.put(campaign.id, campaign.reachImps);
 		}
 		if (cmp != null){
 			myCampaigns.remove(cmp.id);
 		}
-		return new ProblemSetup(matches,campaignReaches,
+		
+		for (int key : matches.keySet())
+		{
+			for (int i = 0; i < 168; i++)
+			{
+				if (matches.get(key)[i])
+				{
+					System.out.print(matches.get(key)[i]+" **  ");
+				}
+			}
+			System.out.println();
+		}
+		
+		ProblemSetup problemSetup =  new ProblemSetup(matches,campaignReaches,
 				myCampaigns.keySet(),
 				impsToGo,daysToGo,
 				startsAndEnds,
 				campaignBudgets);
+		
+		for (int key : problemSetup.getMatches().keySet())
+		{
+			for (int i = 0; i < queries.length; i++)
+			{
+				if (problemSetup.getMatches().get(key)[i])
+				{
+					System.out.print(problemSetup.getMatches().get(key)[i]+"   ");
+				}
+			}
+			System.out.println();
+		}
+		
+		return problemSetup;
 	}
 	/**
 	 *
@@ -511,20 +548,21 @@ public class KellyBot extends Agent {
 		/////////
 
 		//System.out.println("cost models ="+costModels.length);
-		//System.out.println("matches = ");
-		/*
-		for (int key : matches.keySet())
+		System.out.println("matches size = "+problemSetup.getMatches().size());
+		
+		
+		for (int key : problemSetup.getMatches().keySet())
 		{
 			for (int i = 0; i < queries.length; i++)
 			{
-				if (matches.get(key)[i])
+				if (problemSetup.getMatches().get(key)[i])
 				{
-					System.out.print(matches.get(key)[i]+"   ");
+					System.out.print(problemSetup.getMatches().get(key)[i]+"   ");
 				}
 			}
 			System.out.println();
 		}
-		 */
+		 
 		/*
 		System.out.println("reaches = ");
 		for (int key : campaignReaches.keySet())
@@ -532,28 +570,25 @@ public class KellyBot extends Agent {
 				System.out.println(campaignReaches.get(key));
 		}
 		 */
-
 		OptimizationResults optimizationResults = impressionOptimizer.solve(day,costModels, 
 				problemSetup);
 		//System.out.println("2");
 
-		/*
+		System.out.println("A");
 		for (int key : optimizationResults.getImpressionAssignments().keySet())
 		{
 			for (int i = 0; i < queries.length; i++)
 			{
-				//System.out.println("hi");
 				System.out.print(optimizationResults.getImpressionAssignments().get(key)[i]+"   ");
 			}
 			System.out.println();
 		}
-		 */
+		 
 
 		///////////
 		// THREE //
 		///////////
 		bidBundle = makeBidBundle(optimizationResults);
-
 		if (bidBundle != null)
 		{
 			//log.info("Day " + day + ": Sending BidBundle");
@@ -599,18 +634,13 @@ public class KellyBot extends Agent {
 					if (edgeWeight > 0)
 					{
 						double epsilon = 0;//.000001;
-						//System.out.println("Edge weight = "+edgeWeight);
-						//System.out.println("incremental cost = "+costModels[i].get_incremental_cost(edgeWeight));
 						double baseBid = costModels[i].get_incremental_cost(edgeWeight, 1) + epsilon;
-						//System.out.println("basebid = "+baseBid);
 						double bid = baseBid * urgency * urgency;
 
 						if (queries[i].getAdType().equals(AdType.video))
 							bid = bid * campaign.videoCoef;
 						if (queries[i].getDevice().equals(Device.mobile))
 							bid = bid * campaign.mobileCoef;
-						//System.out.println("bid = "+bid);
-						//System.out.println("**************");
 						double percentDecimal = ((double)edgeWeight/(double)sumAllocatedUserTypes[i]);
 						percentDecimal = percentDecimal * 1000;
 
@@ -620,16 +650,15 @@ public class KellyBot extends Agent {
 							percent = 1;
 						}
 
+						System.out.println("bid = "+bid);
 						bidBundle.addQuery(queries[i], bid, new Ad(null), campaign.id, percent);
 					}
 				}
 
-				double impressionLimit = 0.5 * campaign.impsTogo();
-				double budgetLimit = 0.5 * Math.max(0, campaign.budget - campaign.stats.getCost());
-
-				//System.out.println("imp lim = "+impressionLimit);
-				//System.out.println("budget lim = "+budgetLimit);
-				//System.out.println("=====================");
+				//double impressionLimit = 0.5 * campaign.impsTogo();
+				double impressionLimit = campaign.impsTogo();
+				//double budgetLimit = 0.5 * Math.max(0, campaign.budget - campaign.stats.getCost());
+				double budgetLimit = Math.max(0, campaign.budget - campaign.stats.getCost());
 
 				bidBundle.setCampaignDailyLimit(campaign.id, (int) impressionLimit, budgetLimit);
 			}
@@ -706,8 +735,6 @@ public class KellyBot extends Agent {
 		{
 			AdNetworkReportEntry entry = adnetReport.getAdNetworkReportEntry(adnetKey);
 
-			//System.out.println(adnetKey + " " + entry);
-
 			double winCount = entry.getWinCount();
 			double winCost = entry.getCost();
 
@@ -715,6 +742,7 @@ public class KellyBot extends Agent {
 			{
 				if (adnetKey.getGender() == Gender.female)
 				{
+					//writeCostModelDataToFile(costModelFileFemale, winCount, winCost);
 					for (int i = 0; i < queries.length; i++)
 					{
 						if (costModels[i].getType().equals("female") || costModels[i].getType().equals(""))
@@ -724,8 +752,9 @@ public class KellyBot extends Agent {
 					}
 
 				}
-				else if (adnetKey.getGender() == Gender.male)
+				if (adnetKey.getGender() == Gender.male)
 				{
+					//writeCostModelDataToFile(costModelFileMale, winCount, winCost);
 					for (int i = 0; i < queries.length; i++)
 					{
 						if (costModels[i].getType().equals("male") || costModels[i].getType().equals(""))
@@ -735,9 +764,9 @@ public class KellyBot extends Agent {
 					}
 
 				}
-
-				else if (adnetKey.getIncome() == Income.low || adnetKey.getIncome() == Income.medium)
+				if (adnetKey.getIncome() == Income.low || adnetKey.getIncome() == Income.medium)
 				{
+					//writeCostModelDataToFile(costModelFileLow, winCount, winCost);
 					for (int i = 0; i < queries.length; i++)
 					{
 						if (costModels[i].getType().equals("low_income") || costModels[i].getType().equals(""))
@@ -747,8 +776,9 @@ public class KellyBot extends Agent {
 					}
 
 				}
-				else if (adnetKey.getIncome() == Income.high || adnetKey.getIncome() == Income.very_high)
+				if (adnetKey.getIncome() == Income.high || adnetKey.getIncome() == Income.very_high)
 				{
+					//writeCostModelDataToFile(costModelFileHigh, winCount, winCost);
 					for (int i = 0; i < queries.length; i++)
 					{
 						if (costModels[i].getType().equals("high_income") || costModels[i].getType().equals(""))
@@ -758,9 +788,9 @@ public class KellyBot extends Agent {
 					}
 
 				}
-
-				else if (adnetKey.getAge() == Age.Age_18_24 || adnetKey.getAge() == Age.Age_25_34 || adnetKey.getAge() == Age.Age_35_44)
+				if (adnetKey.getAge() == Age.Age_18_24 || adnetKey.getAge() == Age.Age_25_34 || adnetKey.getAge() == Age.Age_35_44)
 				{
+					//writeCostModelDataToFile(costModelFileYoung, winCount, winCost);
 					for (int i = 0; i < queries.length; i++)
 					{
 						if (costModels[i].getType().equals("young") || costModels[i].getType().equals(""))
@@ -769,8 +799,9 @@ public class KellyBot extends Agent {
 						}
 					}
 				}
-				else if (adnetKey.getAge() == Age.Age_45_54 || adnetKey.getAge() == Age.Age_55_64 || adnetKey.getAge() == Age.Age_65_PLUS)
+				if (adnetKey.getAge() == Age.Age_45_54 || adnetKey.getAge() == Age.Age_55_64 || adnetKey.getAge() == Age.Age_65_PLUS)
 				{
+					//writeCostModelDataToFile(costModelFileOld, winCount, winCost);
 					for (int i = 0; i < queries.length; i++)
 					{
 						if (costModels[i].getType().equals("old") || costModels[i].getType().equals(""))
@@ -779,7 +810,26 @@ public class KellyBot extends Agent {
 						}
 					}
 				}
+				
 			}
+		}
+	}
+	
+	private void writeCostModelDataToFile(String fileName,double count, double cost)
+	{
+		try
+		{
+			FileWriter writer = new FileWriter(fileName,true);
+			writer.append(String.valueOf(count));
+		    writer.append(',');
+		    writer.append(String.valueOf((cost)));
+		    writer.append('\n');
+		    writer.flush();
+		    writer.close();
+		}
+		catch(IOException e)
+		{
+		     e.printStackTrace();
 		}
 	}
 
@@ -890,25 +940,27 @@ public class KellyBot extends Agent {
 			queries = new AdxQuery[querySet.size()];
 			querySet.toArray(queries);
 			/// MAKE COST MODELS
-			costModels = new CostModel[queries.length];
+			costModels = new CostModelGeneral[queries.length];
 			for (int i = 0; i < queries.length; i++)
 			{
 				String str = MarketSegment.names(queries[i].getMarketSegments()).toLowerCase();
 				str = str.trim();
-				costModels[i] = new CostModel(str);
+				//costModels[i] = new CostModel(str);
+				costModels[i] = new CostModelOLS(str);
 			}
 		}
 	}
 
-	public class CampaignData {
+	private class CampaignData {
 		/* campaign attributes as set by server */
 		Long reachImps;
 		long dayStart;
 		long dayEnd;
-		Set<MarketSegment> targetSegments;
+		Set<MarketSegment> targetSegment;
 		double videoCoef;
 		double mobileCoef;
 		int id;
+		//private AdxQuery[] campaignQueries;//array of queries relvent for the campaign.
 
 		/* campaign info as reported */
 		CampaignStats stats;
@@ -918,7 +970,7 @@ public class KellyBot extends Agent {
 			reachImps = icm.getReachImps();
 			dayStart = icm.getDayStart();
 			dayEnd = icm.getDayEnd();
-			targetSegments = icm.getTargetSegment();
+			targetSegment = icm.getTargetSegment();
 			videoCoef = icm.getVideoCoef();
 			mobileCoef = icm.getMobileCoef();
 			id = icm.getId();
@@ -930,8 +982,9 @@ public class KellyBot extends Agent {
 		public void setBudget(double d) {
 			budget = d;
 		}
-
-		public double getBudget() {
+		
+		public double getBudget()
+		{
 			return budget;
 		}
 
@@ -940,7 +993,7 @@ public class KellyBot extends Agent {
 			dayEnd = com.getDayEnd();
 			id = com.getId();
 			reachImps = com.getReachImps();
-			targetSegments = com.getTargetSegment();
+			targetSegment = com.getTargetSegment();
 			mobileCoef = com.getMobileCoef();
 			videoCoef = com.getVideoCoef();
 			stats = new CampaignStats(0, 0, 0);
@@ -950,9 +1003,8 @@ public class KellyBot extends Agent {
 		@Override
 		public String toString() {
 			return "Campaign ID " + id + ": " + "day " + dayStart + " to "
-					+ dayEnd + " " + Arrays.toString(targetSegments.toArray()) + ", reach: "
-					+ reachImps + " coefs: (v=" + videoCoef + ", m="
-					+ mobileCoef + ")";
+					+ dayEnd + " " + targetSegment + ", reach: " + reachImps
+					+ " coefs: (v=" + videoCoef + ", m=" + mobileCoef + ")";
 		}
 
 		int impsTogo() {
@@ -963,7 +1015,15 @@ public class KellyBot extends Agent {
 			stats.setValues(s);
 		}
 
+		/*
+		public AdxQuery[] getCampaignQueries() {
+			return campaignQueries;
+		}
+
+		public void setCampaignQueries(AdxQuery[] campaignQueries) {
+			this.campaignQueries = campaignQueries;
+		}
+		*/
 
 	}
-
 }
