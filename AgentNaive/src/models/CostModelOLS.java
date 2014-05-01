@@ -5,7 +5,7 @@ package models;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 
 public class CostModelOLS extends CostModelGeneral {
-
+	//testing comment
 	private int totalImpressions;
 	private int total_imps_young = 800;
 	private int total_imps_old = 200;
